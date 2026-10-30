@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Athar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Bibliothèques Firebase (Compatibilité classique) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-900 text-white flex flex-col hidden md:flex shadow-xl z-20">
+            <div class="h-28 flex items-center justify-center border-b border-gray-800 p-4 bg-gray-950">
+                <img src="image.jpg" alt="Logo Athar" class="h-full w-full object-contain rounded-lg bg-white p-2 shadow-inner">
+            </div>
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto mt-4">
+                <a href="#" onclick="changerOnglet('videos')" id="btn-videos" class="flex items-center space-x-3 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md transition-colors">
+                    <i class="fas fa-video w-5"></i>
+                    <span class="font-medium">Gestion des Vidéos</span>
+                </a>
+                <a href="#" onclick="changerOnglet('reunions')" id="btn-reunions" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-broadcast-tower w-5 text-red-400"></i>
+                    <span class="font-medium">Réunions en ligne</span>
+                </a>
+                <a href="#" onclick="changerOnglet('categories')" id="btn-categories" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-folder w-5"></i>
+                    <span class="font-medium">Catégories</span>
+                </a>
+                <a href="#" onclick="changerOnglet('etudiants')" id="btn-etudiants" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-user-shield w-5"></i>
+                    <span class="font-medium">Utilisateurs & Admins</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t border-gray-800 space-y-2">
+                <a href="index.html" class="flex items-center space-x-3 text-gray-400 hover:text-white px-2 py-2 transition-colors">
+                    <i class="fas fa-external-link-alt w-5"></i>
+                    <span>Voir le site public</span>
+                </a>
+                <a href="login.html" class="flex items-center space-x-3 text-red-400 hover:text-red-300 px-2 py-2 transition-colors">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Déconnexion</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 border-b border-gray-100 z-10">
+                <h1 class="text-2xl font-bold text-gray-800" id="page-title">Gestion des Vidéos</h1>
+                <div class="flex items-center space-x-3">
+                    <button onclick="openAddMeetingModal()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm flex items-center">
+                        <i class="fas fa-video mr-2"></i> Démarrer un Live
+                    </button>
+                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-8">
+                <!-- SECTION 1 : VIDÉOS -->
+                <div id="section-videos" class="block space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h2 class="text-lg font-bold text-gray-800">Toutes les leçons (<span id="video-count">0</span>)</h2>
+                            <button onclick="openAddVideoModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center text-sm font-medium shadow-sm">
+                                <i class="fas fa-plus mr-2"></i> Ajouter une vidéo
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                                        <th class="p-5 font-medium">Titre / Source</th>
+                                        <th class="p-5 font-medium">Spécialité</th>
+                                        <th class="p-5 font-medium">Statut</th>
+                                        <th class="p-5 font-medium text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="video-table-body" class="text-sm text-gray-700 divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2 : RÉUNIONS EN LIGNE -->
+                <div id="section-reunions" class="hidden space-y-6">
+                    <div class="bg-gradient-to-r from-red-600 to-blue-900 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row justify-between items-center">
+                        <div>
+                            <span class="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Visioconférence en direct</span>
+                            <h2 class="text-2xl font-bold mt-2">Salle de réunion & Cours en Live</h2>
+                            <p class="text-sm text-gray-100 mt-1">Créez une salle vidéo interactive (caméra, micro, partage d'écran) accessible directement par vos étudiants sur le site.</p>
+                        </div>
+                        <button onclick="openAddMeetingModal()" class="mt-4 md:mt-0 bg-white text-red-600 hover:bg-gray-100 font-bold px-6 py-3 rounded-xl shadow-md transition flex items-center shrink-0">
+                            <i class="fas fa-plus-circle mr-2"></i> Créer une réunion en ligne
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h2 class="text-lg font-bold text-gray-800">Réunions programmées & Salles actives (<span id="meeting-count">0</span>)</h2>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                                        <th class="p-5 font-medium">Sujet de la réunion</th>
+                                        <th class="p-5 font-medium">Formateur & Catégorie</th>
+                                        <th class="p-5 font-medium">Date / Heure</th>
+                                        <th class="p-5 font-medium">État</th>
+                                        <th class="p-5 font-medium text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="meeting-table-body" class="text-sm text-gray-700 divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3 : CATÉGORIES -->
+                <div id="section-categories" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h2 class="text-lg font-bold text-gray-800">Catégories (<span id="category-count">0</span>)</h2>
+                            <button onclick="openModal('modal-category')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
+                                <i class="fas fa-plus mr-2"></i> Ajouter une catégorie
+                            </button>
+                        </div>
+                        <table class="w-full text-left border-collapse">
+                            <tbody id="category-table-body" class="text-sm text-gray-700 divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SECTION 4 : UTILISATEURS & ADMINS -->
+                <div id="section-etudiants" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h2 class="text-lg font-bold text-gray-800">Tous les comptes (<span id="student-count">0</span>)</h2>
+                            <button onclick="openAddUserModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-sm">
+                                <i class="fas fa-user-plus mr-2"></i> Ajouter un Utilisateur / Admin
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                                        <th class="p-5 font-medium">Nom & E-mail</th>
+                                        <th class="p-5 font-medium">Rôle</th>
+                                        <th class="p-5 font-medium">Mot de passe</th>
+                                        <th class="p-5 font-medium text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="student-table-body" class="text-sm text-gray-700 divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL CRÉER / MODIFIER UNE RÉUNION EN LIGNE -->
+    <div id="modal-meeting" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+                <h3 id="modal-meeting-heading" class="text-lg font-bold text-gray-900">Planifier ou lancer une réunion en ligne</h3>
+                <button onclick="closeModal('modal-meeting')" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Titre de la réunion / du cours en direct</label>
+                    <input type="text" id="meeting-title" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900" placeholder="Ex: Session Questions/Réponses - Développement Web">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nom du formateur</label>
+                        <input type="text" id="meeting-host" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900" placeholder="Ex: Prof. Sami Hedfi">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Spécialité</label>
+                        <select id="meeting-category" class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-900"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Date et Heure</label>
+                        <input type="datetime-local" id="meeting-date" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Statut de la salle</label>
+                        <select id="meeting-status" class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-900 font-semibold">
+                            <option value="EN DIRECT">🔴 En Direct maintenant</option>
+                            <option value="PROGRAMMÉE">📅 Programmée</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Choix du type de réunion -->
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 space-y-3">
+                    <label class="block text-sm font-bold text-blue-900">
+                        <i class="fas fa-video mr-1"></i> Mode de visioconférence :
+                    </label>
+                    <select id="meeting-type" onchange="toggleMeetingLinkInput()" class="w-full border border-blue-300 rounded-lg px-3 py-2 bg-white text-gray-900 text-sm font-semibold">
+                        <option value="jitsi">🎥 Salle vidéo intégrée au site Athar (Caméra + Micro + Partage d'écran)</option>
+                        <option value="externe">🔗 Lien externe (Google Meet, Zoom, Microsoft Teams...)</option>
+                    </select>
+                    <div id="external-link-box" class="hidden pt-2">
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Collez votre lien Google Meet ou Zoom :</label>
+                        <input type="text" id="meeting-ext-link" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-blue-700 bg-white" placeholder="Ex: https://meet.google.com/xxx-xxxx-xxx">
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-t flex justify-end space-x-3 bg-gray-50">
+                <button onclick="closeModal('modal-meeting')" class="px-5 py-2 border rounded-lg font-bold bg-white text-gray-700">Annuler</button>
+                <button onclick="saveMeeting()" class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold shadow-md">
+                    <i class="fas fa-broadcast-tower mr-1"></i> Enregistrer & Publier la réunion
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SALLE DE VISIOCONFÉRENCE EN DIRECT -->
+    <div id="modal-live-room" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-2 md:p-6">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-gray-700">
+            <div class="flex justify-between items-center px-6 py-4 bg-gray-950 border-b border-gray-800 text-white">
+                <div class="flex items-center space-x-3">
+                    <span class="flex h-3 w-3 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                    </span>
+                    <h3 id="live-room-title" class="font-bold text-lg">Salle de réunion en direct</h3>
+                </div>
+                <button onclick="quitterSalleLive()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition">
+                    <i class="fas fa-phone-slash mr-1"></i> Quitter la réunion
+                </button>
+            </div>
+            <div class="flex-1 bg-black w-full">
+                <iframe id="live-room-iframe" class="w-full h-full" allow="camera; microphone; fullscreen; display-capture; autoplay" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AJOUTER / MODIFIER VIDÉO -->
+    <div id="modal-video" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+                <h3 id="modal-video-heading" class="text-lg font-bold text-gray-900">Ajouter une vidéo</h3>
+                <button onclick="closeModal('modal-video')" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Titre de la leçon</label>
+                    <input type="text" id="video-title" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900" placeholder="Ex: Introduction à React JS">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Catégorie</label>
+                    <select id="video-category" class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-900"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Description / Informations du cours</label>
+                    <textarea id="video-desc" rows="2" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900" placeholder="Ex: Chapitre 1..."></textarea>
+                </div>
+                <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100">
+                    <label class="block text-sm font-bold text-blue-900 mb-1">Option 1 : Parcourir une vidéo sur votre disque</label>
+                    <input type="file" id="video-file" accept="video/*" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm text-gray-700">
+                    <p id="current-file-info" class="text-xs text-blue-700 mt-1 hidden"></p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <label class="block text-sm font-bold text-gray-800 mb-1">Option 2 : Ajouter un lien vidéo (YouTube / URL)</label>
+                    <input type="text" id="video-link" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm text-blue-700" placeholder="Ex: https://www.youtube.com/watch?v=...">
+                </div>
+            </div>
+            <div class="p-5 border-t flex justify-end space-x-3 bg-gray-50">
+                <button onclick="closeModal('modal-video')" class="px-5 py-2 border rounded-lg font-bold bg-white text-gray-700">Annuler</button>
+                <button onclick="saveVideo()" id="btn-save-video" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-md">Publier la vidéo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL UTILISATEUR -->
+    <div id="modal-student" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div class="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+                <h3 id="modal-user-heading" class="text-lg font-bold text-gray-900">Ajouter un compte</h3>
+                <button onclick="closeModal('modal-student')" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nom complet</label>
+                    <input type="text" id="student-name" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900" placeholder="Ex: Sami Hedfi">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Adresse E-mail</label>
+                    <input type="email" id="student-email" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900" placeholder="Ex: sami@gmail.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Mot de passe</label>
+                    <input type="text" id="student-password" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900" placeholder="Minimum 4 caractères">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Rôle</label>
+                    <select id="student-role" class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-900 font-medium">
+                        <option value="etudiant">🎓 Étudiant / Utilisateur</option>
+                        <option value="admin">🛡️ Administrateur</option>
+                    </select>
+                </div>
+            </div>
+            <div class="p-5 border-t flex justify-end space-x-3 bg-gray-50">
+                <button onclick="closeModal('modal-student')" class="px-4 py-2 border rounded-lg font-bold bg-white text-gray-700">Annuler</button>
+                <button onclick="saveStudent()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CATÉGORIE -->
+    <div id="modal-category" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 text-gray-900">Nouvelle catégorie</h3>
+            <input type="text" id="category-title" class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 text-gray-900" placeholder="Ex: Comptabilité">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeModal('modal-category')" class="px-4 py-2 border rounded-lg font-bold text-gray-700">Annuler</button>
+                <button onclick="saveCategory()" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. INITIALISATION FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDLCcUSTGB0rz5blLP_GXyduoBMc9z3ujI",
+            authDomain: "athar-edu-5832a.firebaseapp.com",
+            projectId: "athar-edu-5832a",
+            storageBucket: "athar-edu-5832a.firebasestorage.app",
+            messagingSenderId: "87196453455",
+            appId: "1:87196453455:web:2c97887c04984e34f8b83a",
+            measurementId: "G-T7JNJFFBPV"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- 2. VARIABLES DE DONNÉES ---
+        let videos = [];
+        let meetings = [];
+        let categories = [];
+        let students = [];
+
+        let editingVideoIndex = -1;
+        let editingMeetingIndex = -1;
+        let editingUserIndex = -1;
+
+        // --- 3. ÉCOUTEURS EN TEMPS RÉEL (FIRESTORE) ---
+        // Ces fonctions mettent à jour automatiquement l'affichage dès qu'une donnée change dans la base
+
+        db.collection("videos").onSnapshot((snapshot) => {
+            videos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderAll();
+        });
+
+        db.collection("meetings").onSnapshot((snapshot) => {
+            meetings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderAll();
+        });
+
+        db.collection("categories").onSnapshot((snapshot) => {
+            categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Ajouter des catégories par défaut si la base est totalement vide
+            if (categories.length === 0) {
+                db.collection("categories").add({ titre: "Informatique & Code" });
+                db.collection("categories").add({ titre: "Design & UX" });
+                db.collection("categories").add({ titre: "Business & Marketing" });
+            }
+            renderAll();
+        });
+
+        db.collection("students").onSnapshot((snapshot) => {
+            students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Ajouter un compte admin par défaut si la base est totalement vide
+            if (students.length === 0) {
+                db.collection("students").add({ nom: "Admin Principal", email: "sami.elhedfi@gmail.com", password: "admin", role: "admin" });
+            }
+            renderAll();
+        });
+
+
+        // --- FONCTIONS INTERFACE UTILISATEUR ---
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).classList.add('flex');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById(id).classList.remove('flex');
+        }
+
+        function changerOnglet(onglet) {
+            ['videos', 'reunions', 'categories', 'etudiants'].forEach(o => {
+                document.getElementById('section-' + o).classList.add('hidden');
+                document.getElementById('btn-' + o).className = "flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors";
+            });
+            document.getElementById('section-' + onglet).classList.remove('hidden');
+            document.getElementById('btn-' + onglet).className = "flex items-center space-x-3 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md transition-colors";
+            const titres = {
+                'videos': 'Gestion des Vidéos',
+                'reunions': 'Réunions en ligne & Cours en Direct',
+                'categories': 'Gestion des Catégories',
+                'etudiants': 'Gestion des Utilisateurs & Administrateurs'
+            };
+            document.getElementById('page-title').innerText = titres[onglet];
+        }
+
+        function toggleMeetingLinkInput() {
+            const type = document.getElementById('meeting-type').value;
+            const box = document.getElementById('external-link-box');
+            if (type === 'externe') {
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        // --- GESTION DES RÉUNIONS EN LIGNE ---
+        function openAddMeetingModal() {
+            editingMeetingIndex = -1;
+            document.getElementById('modal-meeting-heading').innerText = "Planifier ou lancer une réunion en ligne";
+            document.getElementById('meeting-title').value = '';
+            document.getElementById('meeting-host').value = 'Prof. Sami Hedfi';
+            document.getElementById('meeting-date').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('meeting-status').value = 'EN DIRECT';
+            document.getElementById('meeting-type').value = 'jitsi';
+            document.getElementById('meeting-ext-link').value = '';
+            toggleMeetingLinkInput();
+            openModal('modal-meeting');
+        }
+
+        function editMeeting(index) {
+            editingMeetingIndex = index;
+            const m = meetings[index];
+            document.getElementById('modal-meeting-heading').innerText = "Modifier la réunion";
+            document.getElementById('meeting-title').value = m.titre || '';
+            document.getElementById('meeting-host').value = m.animateur || '';
+            document.getElementById('meeting-category').value = m.categorie || (categories.length > 0 ? categories[0].titre : '');
+            document.getElementById('meeting-date').value = m.dateHeure || '';
+            document.getElementById('meeting-status').value = m.statut || 'EN DIRECT';
+            document.getElementById('meeting-type').value = m.type || 'jitsi';
+            document.getElementById('meeting-ext-link').value = m.lienExterne || '';
+            toggleMeetingLinkInput();
+            openModal('modal-meeting');
+        }
+
+        function saveMeeting() {
+            const titre = document.getElementById('meeting-title').value.trim();
+            const animateur = document.getElementById('meeting-host').value.trim() || 'Formateur Athar';
+            const categorie = document.getElementById('meeting-category').value;
+            const dateHeure = document.getElementById('meeting-date').value;
+            const statut = document.getElementById('meeting-status').value;
+            const type = document.getElementById('meeting-type').value;
+            const lienExterne = document.getElementById('meeting-ext-link').value.trim();
+
+            if (!titre) return alert("Veuillez donner un titre à la réunion.");
+            if (type === 'externe' && !lienExterne) return alert("Veuillez coller le lien Google Meet ou Zoom.");
+
+            const roomName = "Athar_Live_" + titre.replace(/[^a-zA-Z0-9]/g, "_") + "_" + Math.floor(100 + Math.random() * 900);
+
+            const meetingData = {
+                titre,
+                animateur,
+                categorie,
+                dateHeure,
+                statut,
+                type,
+                roomName: (editingMeetingIndex >= 0 && meetings[editingMeetingIndex].roomName) ? meetings[editingMeetingIndex].roomName : roomName,
+                lienExterne
+            };
+
+            if (editingMeetingIndex >= 0) {
+                // Modification Firestore
+                db.collection("meetings").doc(meetings[editingMeetingIndex].id).update(meetingData);
+            } else {
+                // Création Firestore
+                db.collection("meetings").add(meetingData);
+            }
+
+            closeModal('modal-meeting');
+            changerOnglet('reunions');
+        }
+
+        function lancerSalleLive(index) {
+            const m = meetings[index];
+            if (m.type === 'externe' && m.lienExterne) {
+                window.open(m.lienExterne, '_blank');
+                return;
+            }
+            document.getElementById('live-room-title').innerText = `${m.titre} (${m.animateur})`;
+            document.getElementById('live-room-iframe').src = `https://meet.jit.si/${m.roomName}`;
+            openModal('modal-live-room');
+        }
+
+        function quitterSalleLive() {
+            document.getElementById('live-room-iframe').src = '';
+            closeModal('modal-live-room');
+        }
+
+        function deleteMeeting(index) {
+            if (!confirm("Supprimer cette réunion ?")) return;
+            db.collection("meetings").doc(meetings[index].id).delete();
+        }
+
+        // --- GESTION DES VIDÉOS ---
+        function openAddVideoModal() {
+            editingVideoIndex = -1;
+            document.getElementById('modal-video-heading').innerText = "Ajouter une nouvelle vidéo";
+            document.getElementById('video-title').value = '';
+            document.getElementById('video-desc').value = '';
+            document.getElementById('video-file').value = '';
+            document.getElementById('video-link').value = '';
+            openModal('modal-video');
+        }
+
+        function editVideo(index) {
+            editingVideoIndex = index;
+            const v = videos[index];
+            document.getElementById('modal-video-heading').innerText = "Modifier la vidéo";
+            document.getElementById('video-title').value = v.titre || '';
+            document.getElementById('video-category').value = v.categorie || (categories.length > 0 ? categories[0].titre : '');
+            document.getElementById('video-desc').value = v.description || '';
+            document.getElementById('video-link').value = v.lien || '';
+            openModal('modal-video');
+        }
+
+        function saveVideo() {
+            const title = document.getElementById('video-title').value.trim();
+            const category = document.getElementById('video-category').value;
+            const description = document.getElementById('video-desc').value.trim();
+            const fileInput = document.getElementById('video-file');
+            const linkInput = document.getElementById('video-link').value.trim();
+
+            if (!title) return alert("Veuillez entrer un titre.");
+            let fileName = fileInput.files.length > 0 ? fileInput.files[0].name : (editingVideoIndex >= 0 ? videos[editingVideoIndex].fichier : "");
+            if (!fileName && !linkInput) return alert("Sélectionnez un fichier ou ajoutez un lien.");
+
+            const videoData = { titre: title, categorie: category, description: description, fichier: fileName, lien: linkInput };
+            
+            if (editingVideoIndex >= 0) {
+                // Modification Firestore
+                db.collection("videos").doc(videos[editingVideoIndex].id).update(videoData);
+            } else {
+                // Création Firestore
+                db.collection("videos").add(videoData);
+            }
+
+            closeModal('modal-video');
+        }
+
+        function deleteVideo(index) {
+            if (!confirm("Supprimer cette vidéo ?")) return;
+            db.collection("videos").doc(videos[index].id).delete();
+        }
+
+        // --- UTILISATEURS & CATÉGORIES ---
+        function openAddUserModal() {
+            editingUserIndex = -1;
+            document.getElementById('student-name').value = '';
+            document.getElementById('student-email').value = '';
+            document.getElementById('student-password').value = '';
+            openModal('modal-student');
+        }
+
+        function editUser(index) {
+            editingUserIndex = index;
+            const u = students[index];
+            document.getElementById('student-name').value = u.nom || '';
+            document.getElementById('student-email').value = u.email || '';
+            document.getElementById('student-password').value = u.password || '';
+            document.getElementById('student-role').value = u.role || 'etudiant';
+            openModal('modal-student');
+        }
+
+        function saveStudent() {
+            const nom = document.getElementById('student-name').value.trim();
+            const email = document.getElementById('student-email').value.trim();
+            const password = document.getElementById('student-password').value.trim();
+            const role = document.getElementById('student-role').value;
+            
+            if (!nom || !email || !password) return alert("Remplissez tous les champs.");
+
+            const userData = { nom, email, password, role };
+            
+            if (editingUserIndex >= 0) {
+                db.collection("students").doc(students[editingUserIndex].id).update(userData);
+            } else {
+                db.collection("students").add(userData);
+            }
+            
+            closeModal('modal-student');
+        }
+
+        function deleteStudent(index) {
+            if (!confirm("Supprimer cet utilisateur ?")) return;
+            db.collection("students").doc(students[index].id).delete();
+        }
+
+        function saveCategory() {
+            const title = document.getElementById('category-title').value.trim();
+            if (!title) return;
+            
+            // Création Firestore
+            db.collection("categories").add({ titre: title });
+            
+            document.getElementById('category-title').value = '';
+            closeModal('modal-category');
+        }
+
+        function deleteCategory(index) {
+            if (!confirm("Supprimer cette catégorie ?")) return;
+            db.collection("categories").doc(categories[index].id).delete();
+        }
+
+        // --- AFFICHAGE GLOBAL ---
+        // Cette fonction se déclenche automatiquement à chaque fois qu'une donnée change sur Firebase !
+        function renderAll() {
+            // 1. Vidéos
+            const vBody = document.getElementById('video-table-body');
+            vBody.innerHTML = '';
+            videos.forEach((v, index) => {
+                const src = v.lien || v.fichier || '';
+                vBody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-5 font-bold text-gray-900">${v.titre}<br><span class="text-xs text-blue-600 font-normal">${src}</span></td>
+                        <td class="p-5 text-gray-600">${v.categorie || ''}</td>
+                        <td class="p-5"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">Publié</span></td>
+                        <td class="p-5 text-right space-x-2">
+                            <button onclick="editVideo(${index})" class="text-blue-600 font-medium"><i class="fas fa-edit"></i> Modifier</button>
+                            <button onclick="deleteVideo(${index})" class="text-gray-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('video-count').innerText = videos.length;
+
+            // 2. Réunions en ligne
+            const mBody = document.getElementById('meeting-table-body');
+            mBody.innerHTML = '';
+            meetings.forEach((m, index) => {
+                const isDirect = m.statut === 'EN DIRECT';
+                const badge = isDirect
+                    ? `<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fas fa-circle text-[8px] mr-1 animate-pulse"></i>EN DIRECT</span>`
+                    : `<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">📅 PROGRAMMÉE</span>`;
+
+                const dateFormatee = m.dateHeure ? m.dateHeure.replace('T', ' à ') : 'Maintenant';
+
+                mBody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-5">
+                            <span class="font-bold text-gray-900 block">${m.titre}</span>
+                            <span class="text-xs text-gray-500">${m.type === 'externe' ? 'Lien externe (Meet/Zoom)' : 'Salle vidéo Athar intégrée'}</span>
+                        </td>
+                        <td class="p-5 text-gray-700"><b>${m.animateur}</b><br><span class="text-xs text-blue-600">${m.categorie || ''}</span></td>
+                        <td class="p-5 text-gray-600 text-xs font-semibold">${dateFormatee}</td>
+                        <td class="p-5">${badge}</td>
+                        <td class="p-5 text-right space-x-2">
+                            <button onclick="lancerSalleLive(${index})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">
+                                <i class="fas fa-video mr-1"></i> Rejoindre le Live
+                            </button>
+                            <button onclick="editMeeting(${index})" class="text-blue-600 hover:text-blue-800 px-2"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteMeeting(${index})" class="text-gray-400 hover:text-red-600 px-2"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('meeting-count').innerText = meetings.length;
+
+            // 3. Catégories
+            const cBody = document.getElementById('category-table-body');
+            const vSelect = document.getElementById('video-category');
+            const mSelect = document.getElementById('meeting-category');
+            cBody.innerHTML = '';
+            vSelect.innerHTML = '';
+            mSelect.innerHTML = '';
+            
+            categories.forEach((cObj, index) => {
+                const c = cObj.titre; // Extraction du nom de la catégorie depuis Firestore
+                cBody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-5 font-bold text-gray-900"><i class="fas fa-folder text-blue-500 mr-3"></i>${c}</td>
+                        <td class="p-5 text-right"><button onclick="deleteCategory(${index})" class="text-gray-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+                vSelect.innerHTML += `<option value="${c}">${c}</option>`;
+                mSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            document.getElementById('category-count').innerText = categories.length;
+
+            // 4. Utilisateurs
+            const sBody = document.getElementById('student-table-body');
+            sBody.innerHTML = '';
+            students.forEach((s, index) => {
+                sBody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-5 font-bold text-gray-900">${s.nom}<br><span class="text-xs text-gray-500 font-normal">${s.email}</span></td>
+                        <td class="p-5"><span class="px-3 py-1 rounded-full text-xs font-bold ${s.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${s.role}</span></td>
+                        <td class="p-5 font-mono text-xs">${s.password}</td>
+                        <td class="p-5 text-right space-x-2">
+                            <button onclick="editUser(${index})" class="text-blue-600"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteStudent(${index})" class="text-gray-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('student-count').innerText = students.length;
+        }
+
+    </script>
+</body>
+</html>

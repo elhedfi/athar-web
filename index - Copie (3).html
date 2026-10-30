@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athar - Académie Éducative</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        body[dir="rtl"] { font-family: 'Cairo', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex-shrink-0 flex items-center h-full py-2">
+                    <img src="image.jpg" alt="Logo Athar" class="h-full w-auto object-contain">
+                </div>
+                <div class="hidden md:flex space-x-8 items-center" id="nav-menu">
+                    <a href="#" class="text-blue-600 font-semibold" data-i18n="nav_home">Accueil</a>
+                    <a href="#courses" class="text-gray-600 hover:text-blue-600 transition" data-i18n="nav_courses">Nos Cours</a>
+                    <select id="lang-select" onchange="changeLanguage(this.value)" class="border border-gray-300 bg-gray-50 text-gray-700 rounded-lg py-2 px-3 text-sm cursor-pointer">
+                        <option value="fr">🇫🇷 FR</option>
+                        <option value="en">🇬🇧 EN</option>
+                        <option value="ar">🇸🇦 AR</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-gray-900 to-blue-900 text-white py-24 text-center px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6" data-i18n="hero_title">Maîtrisez les compétences de demain</h1>
+        <p class="text-xl mb-8 text-gray-300 max-w-2xl mx-auto" data-i18n="hero_subtitle">Découvrez des formations vidéo de haute qualité, animées par des experts reconnus de l'industrie.</p>
+        <a href="#courses" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full transition shadow-lg" data-i18n="btn_start">Commencer l'apprentissage</a>
+    </div>
+
+    <!-- Catégories & Vidéos -->
+    <div id="courses" class="max-w-7xl mx-auto px-4 py-16">
+        <h2 class="text-3xl font-bold text-center mb-10 text-gray-900" data-i18n="courses_title">Nos Domaines d'Expertise</h2>
+        
+        <!-- Filtres de catégories -->
+        <div id="categories-container" class="flex flex-wrap justify-center gap-4 mb-12"></div>
+
+        <!-- Grille des vidéos -->
+        <div id="videos-container" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
+    </div>
+
+    <!-- Modal Lecteur Vidéo -->
+    <div id="video-modal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden relative">
+            <div class="flex justify-between items-center p-5 border-b">
+                <div>
+                    <span id="modal-video-cat" class="text-xs font-bold text-blue-600 uppercase">Catégorie</span>
+                    <h3 id="modal-video-title" class="text-xl font-bold text-gray-900">Titre de la vidéo</h3>
+                </div>
+                <button onclick="closeVideo()" class="text-gray-500 hover:text-red-600 bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <div class="bg-black w-full flex items-center justify-center">
+                <video id="main-video-player" controls class="w-full max-h-[500px]"></video>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PROJECT_ID = "athar-edu-5832a";
+        const FIRESTORE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/videos`;
+
+        let allVideos = JSON.parse(localStorage.getItem('athar_videos')) || [];
+        let allCategories = JSON.parse(localStorage.getItem('athar_categories')) || ["Informatique & Code", "Design & UX", "Business & Marketing"];
+        let activeCategory = 'ALL';
+
+        function afficherCategories() {
+            const catContainer = document.getElementById('categories-container');
+            catContainer.innerHTML = `<button onclick="filtrer('ALL')" class="px-6 py-2 ${activeCategory === 'ALL' ? 'bg-blue-600 text-white' : 'bg-white border text-gray-700'} rounded-full font-medium shadow-sm transition">Tout</button>`;
+            allCategories.forEach(cat => {
+                const isActif = activeCategory === cat;
+                catContainer.innerHTML += `<button onclick="filtrer('${cat.replace(/'/g, "\\'")}')" class="px-6 py-2 ${isActif ? 'bg-blue-600 text-white' : 'bg-white border text-gray-700'} rounded-full font-medium shadow-sm transition">${cat}</button>`;
+            });
+        }
+
+        function filtrer(categorie) {
+            activeCategory = categorie;
+            afficherCategories();
+            afficherVideos();
+        }
+
+        function afficherVideos() {
+            const container = document.getElementById('videos-container');
+            container.innerHTML = '';
+
+            const liste = activeCategory === 'ALL' ? allVideos : allVideos.filter(v => v.categorie === activeCategory);
+
+            if (liste.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 col-span-3 py-10">Aucun cours disponible dans cette catégorie.</p>';
+                return;
+            }
+
+            liste.forEach(video => {
+                const fichier = video.fichier || video.lien || '';
+                const safeTitle = (video.titre || 'Sans titre').replace(/'/g, "\\'");
+                const safeCat = (video.categorie || 'Général').replace(/'/g, "\\'");
+                const safeFile = fichier.replace(/'/g, "\\'");
+
+                container.innerHTML += `
+                    <div onclick="openVideo('${safeFile}', '${safeTitle}', '${safeCat}')" class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1 cursor-pointer group">
+                        <div class="h-48 bg-gray-900 relative flex items-center justify-center">
+                            <i class="fas fa-play-circle text-5xl text-white opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all"></i>
+                        </div>
+                        <div class="p-6">
+                            <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">${video.categorie || 'Général'}</span>
+                            <h3 class="mt-2 text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">${video.titre}</h3>
+                            <p class="mt-2 text-xs text-gray-400"><i class="fas fa-file-video mr-1"></i> ${fichier}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Récupérer automatiquement les vidéos depuis Firebase + LocalStorage
+        async function syncFirebase() {
+            try {
+                const res = await fetch(FIRESTORE_URL);
+                const data = await res.json();
+                if (data.documents) {
+                    const fbVideos = data.documents.map(doc => ({
+                        titre: doc.fields.titre?.stringValue || 'Sans titre',
+                        categorie: doc.fields.categorie?.stringValue || 'Informatique & Code',
+                        fichier: doc.fields.fichier?.stringValue || doc.fields.lien?.stringValue || ''
+                    }));
+                    allVideos = fbVideos;
+                    // Ajouter les catégories créées pour les vidéos si elles n'existent pas encore dans les boutons
+                    fbVideos.forEach(v => {
+                        if (v.categorie && !allCategories.includes(v.categorie)) {
+                            allCategories.push(v.categorie);
+                        }
+                    });
+                    afficherCategories();
+                    afficherVideos();
+                }
+            } catch (e) {}
+        }
+
+        function openVideo(fileName, title, category) {
+            const modal = document.getElementById('video-modal');
+            const player = document.getElementById('main-video-player');
+            document.getElementById('modal-video-title').innerText = title;
+            document.getElementById('modal-video-cat').innerText = category;
+
+            player.src = fileName;
+            player.onerror = () => {
+                player.onerror = null;
+                player.src = 'videos/' + fileName;
+            };
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            player.play().catch(() => {});
+        }
+
+        function closeVideo() {
+            const modal = document.getElementById('video-modal');
+            const player = document.getElementById('main-video-player');
+            player.pause();
+            player.src = '';
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        const translations = {
+            fr: { nav_home: "Accueil", nav_courses: "Nos Cours", hero_title: "Maîtrisez les compétences de demain", hero_subtitle: "Découvrez des formations vidéo de haute qualité, animées par des experts reconnus de l'industrie.", btn_start: "Commencer l'apprentissage", courses_title: "Nos Domaines d'Expertise" },
+            en: { nav_home: "Home", nav_courses: "Our Courses", hero_title: "Master tomorrow's skills", hero_subtitle: "Discover high-quality video training, led by recognized industry experts.", btn_start: "Start learning", courses_title: "Our Areas of Expertise" },
+            ar: { nav_home: "الرئيسية", nav_courses: "دوراتنا", hero_title: "أتقن مهارات الغد", hero_subtitle: "اكتشف دورات فيديو عالية الجودة، يقدمها خبراء معترف بهم في الصناعة.", btn_start: "ابدأ التعلم", courses_title: "مجالات خبرتنا" }
+        };
+
+        function changeLanguage(lang) {
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang]?.[key]) el.textContent = translations[lang][key];
+            });
+        }
+
+        afficherCategories();
+        afficherVideos();
+        syncFirebase();
+    </script>
+</body>
+</html>

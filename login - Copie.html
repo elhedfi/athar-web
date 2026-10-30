@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Admin Athar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 h-screen flex items-center justify-center">
+
+    <!-- Boîte de connexion -->
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+        <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold text-gray-900">Espace Administrateur</h2>
+            <p class="text-sm text-gray-500 mt-2">Connectez-vous pour gérer vos vidéos</p>
+        </div>
+
+        <!-- Zone d'affichage des erreurs -->
+        <div id="error-msg" class="hidden bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg text-sm font-medium">
+            <!-- Le message d'erreur apparaîtra ici -->
+        </div>
+
+        <!-- Formulaire -->
+        <div class="space-y-5">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Adresse e-mail</label>
+                <input type="email" id="email" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="admin@athar.com">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Mot de passe</label>
+                <input type="password" id="password" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••">
+            </div>
+
+            <button id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md mt-4">
+                Se connecter
+            </button>
+        </div>
+    </div>
+
+    <!-- SCRIPT FIREBASE -->
+    <script type="module">
+        // Importation des outils Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // Votre configuration Firebase exacte
+        const firebaseConfig = {
+            apiKey: "AIzaSyDLCcUSTGB0rz5blLP_GXyduoBMc9z3ujI",
+            authDomain: "athar-edu-5832a.firebaseapp.com",
+            projectId: "athar-edu-5832a",
+            storageBucket: "athar-edu-5832a.firebasestorage.app",
+            messagingSenderId: "87196453455",
+            appId: "1:87196453455:web:2c97887c04984e34f8b83a",
+            measurementId: "G-T7JNJFFBPV"
+        };
+
+        // Initialisation de Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Action lors du clic sur le bouton "Se connecter"
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-msg');
+
+            // Cacher le message d'erreur s'il était affiché
+            errorMsg.classList.add('hidden');
+
+            // Tentative de connexion avec Firebase
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    // Succès ! L'email et le mot de passe sont corrects.
+                    // Redirection automatique vers la page administrateur.
+                    window.location.href = "admin.html";
+                })
+                .catch((error) => {
+                    // Échec ! Identifiants incorrects.
+                    errorMsg.textContent = "E-mail ou mot de passe incorrect.";
+                    errorMsg.classList.remove('hidden'); // Afficher la boîte rouge
+                });
+        });
+    </script>
+</body>
+</html>

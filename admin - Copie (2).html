@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Athar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-900 text-white flex flex-col hidden md:flex shadow-xl z-20">
+            <div class="h-28 flex items-center justify-center border-b border-gray-800 p-4 bg-gray-950">
+                <img src="image.jpg" alt="Logo Athar" class="h-full w-full object-contain rounded-lg bg-white p-2 shadow-inner">
+            </div>
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto mt-4">
+                <a href="#" onclick="changerOnglet('videos')" id="btn-videos" class="flex items-center space-x-3 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md transition-colors">
+                    <i class="fas fa-video w-5"></i>
+                    <span class="font-medium">Gestion des Vidéos</span>
+                </a>
+                <a href="#" onclick="changerOnglet('categories')" id="btn-categories" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-folder w-5"></i>
+                    <span class="font-medium">Catégories</span>
+                </a>
+                <a href="#" onclick="changerOnglet('etudiants')" id="btn-etudiants" class="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-users w-5"></i>
+                    <span class="font-medium">Étudiants</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t border-gray-800">
+                <a href="index.html" class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-external-link-alt w-5"></i>
+                    <span>Voir le site public</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 border-b border-gray-100 z-10">
+                <h1 class="text-2xl font-bold text-gray-800" id="page-title">Gestion des Vidéos</h1>
+                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">A</div>
+            </header>
+
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-8">
+                <!-- SECTION 1 : VIDÉOS -->
+                <div id="section-videos" class="block space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h2 class="text-lg font-bold text-gray-800">Toutes les leçons (<span id="video-count">0</span>)</h2>
+                            <button onclick="openModal('modal-video')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center text-sm font-medium shadow-sm">
+                                <i class="fas fa-plus mr-2"></i> Ajouter une vidéo
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-white text-gray-400 text-xs uppercase tracking-wider border-b border-gray-100">
+                                        <th class="p-5 font-medium">Titre / Fichier Vidéo</th>
+                                        <th class="p-5 font-medium">Spécialité</th>
+                                        <th class="p-5 font-medium">Statut</th>
+                                        <th class="p-5 font-medium text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="video-table-body" class="text-sm text-gray-700 divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2 : CATÉGORIES -->
+                <div id="section-categories" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h2 class="text-lg font-bold text-gray-800">Catégories (<span id="category-count">0</span>)</h2>
+                            <button onclick="openModal('modal-category')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
+                                <i class="fas fa-plus mr-2"></i> Ajouter une catégorie
+                            </button>
+                        </div>
+                        <table class="w-full text-left border-collapse">
+                            <tbody id="category-table-body" class="text-sm text-gray-700 divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SECTION 3 : ÉTUDIANTS -->
+                <div id="section-etudiants" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h2 class="text-lg font-bold text-gray-800">Étudiants (<span id="student-count">0</span>)</h2>
+                            <button onclick="openModal('modal-student')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
+                                <i class="fas fa-user-plus mr-2"></i> Ajouter un étudiant
+                            </button>
+                        </div>
+                        <table class="w-full text-left border-collapse">
+                            <tbody id="student-table-body" class="text-sm text-gray-700 divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL AJOUTER VIDÉO (AVEC BOUTON PARCOURIR) -->
+    <div id="modal-video" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="flex justify-between items-center p-6 border-b border-gray-100">
+                <h3 class="text-lg font-bold">Ajouter une vidéo depuis le disque / serveur</h3>
+                <button onclick="closeModal('modal-video')" class="text-gray-400 hover:text-gray-700"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Titre de la leçon</label>
+                    <input type="text" id="video-title" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="Ex: Introduction à React JS">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Catégorie</label>
+                    <select id="video-category" class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Parcourir votre disque (Fichier .mp4, .webm...)</label>
+                    <input type="file" id="video-file" accept="video/*" class="w-full border border-gray-300 rounded-lg p-2 text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                    <p class="text-xs text-gray-400 mt-1">Astuce : Placez vos vidéos dans le dossier <b>Athar_Site</b> pour une lecture directe.</p>
+                </div>
+            </div>
+            <div class="p-6 border-t flex justify-end space-x-3 bg-gray-50">
+                <button onclick="closeModal('modal-video')" class="px-5 py-2 border rounded-lg font-bold bg-white">Annuler</button>
+                <button onclick="saveVideo()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold">Publier la vidéo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL APERÇU VIDÉO -->
+    <div id="modal-preview" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 id="preview-title" class="font-bold text-lg">Aperçu de la vidéo</h3>
+                <button onclick="closePreview()" class="text-gray-500 hover:text-red-600 text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="bg-black flex items-center justify-center">
+                <video id="preview-player" controls class="w-full max-h-[450px]"></video>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CATÉGORIE -->
+    <div id="modal-category" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4">Nouvelle catégorie</h3>
+            <input type="text" id="category-title" class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4" placeholder="Ex: Comptabilité">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeModal('modal-category')" class="px-4 py-2 border rounded-lg font-bold">Annuler</button>
+                <button onclick="saveCategory()" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ÉTUDIANT -->
+    <div id="modal-student" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4">Nouvel étudiant</h3>
+            <input type="text" id="student-name" class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-3" placeholder="Nom complet">
+            <input type="email" id="student-email" class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4" placeholder="Adresse e-mail">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeModal('modal-student')" class="px-4 py-2 border rounded-lg font-bold">Annuler</button>
+                <button onclick="saveStudent()" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold">Inscrire</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let videos = JSON.parse(localStorage.getItem('athar_videos')) || [];
+        let categories = JSON.parse(localStorage.getItem('athar_categories')) || ["Informatique & Code", "Design & UX", "Business & Marketing"];
+        let students = JSON.parse(localStorage.getItem('athar_students')) || [];
+
+        function saveLocal() {
+            localStorage.setItem('athar_videos', JSON.stringify(videos));
+            localStorage.setItem('athar_categories', JSON.stringify(categories));
+            localStorage.setItem('athar_students', JSON.stringify(students));
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).classList.add('flex');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById(id).classList.remove('flex');
+        }
+
+        function changerOnglet(onglet) {
+            ['videos', 'categories', 'etudiants'].forEach(o => {
+                document.getElementById('section-' + o).classList.add('hidden');
+                document.getElementById('btn-' + o).className = "flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors";
+            });
+            document.getElementById('section-' + onglet).classList.remove('hidden');
+            document.getElementById('btn-' + onglet).className = "flex items-center space-x-3 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md transition-colors";
+            const titres = {'videos': 'Gestion des Vidéos', 'categories': 'Gestion des Catégories', 'etudiants': 'Base de données Étudiants'};
+            document.getElementById('page-title').innerText = titres[onglet];
+        }
+
+        function renderAll() {
+            const vBody = document.getElementById('video-table-body');
+            vBody.innerHTML = '';
+            videos.forEach((v, index) => {
+                const nomFichier = v.fichier || v.lien || 'Aucun fichier';
+                vBody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-5 flex items-center">
+                            <button onclick="previewVideo('${nomFichier}', '${v.titre.replace(/'/g, "\\'")}')" class="w-12 h-10 bg-blue-50 text-blue-600 rounded-lg mr-4 flex items-center justify-center hover:bg-blue-600 hover:text-white transition" title="Lire la vidéo">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <div>
+                                <span class="font-bold text-gray-900 block">${v.titre}</span>
+                                <span class="text-xs text-blue-600"><i class="fas fa-file-video mr-1"></i>${nomFichier}</span>
+                            </div>
+                        </td>
+                        <td class="p-5 text-gray-600">${v.categorie}</td>
+                        <td class="p-5"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">Publié</span></td>
+                        <td class="p-5 text-right">
+                            <button onclick="deleteVideo(${index})" class="text-gray-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('video-count').innerText = videos.length;
+
+            const cBody = document.getElementById('category-table-body');
+            const cSelect = document.getElementById('video-category');
+            cBody.innerHTML = '';
+            cSelect.innerHTML = '';
+            categories.forEach((c, index) => {
+                cBody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-5 font-bold text-gray-900"><i class="fas fa-folder text-blue-500 mr-3"></i>${c}</td>
+                        <td class="p-5 text-right"><button onclick="deleteCategory(${index})" class="text-gray-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+                cSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            document.getElementById('category-count').innerText = categories.length;
+
+            const sBody = document.getElementById('student-table-body');
+            sBody.innerHTML = '';
+            students.forEach((s, index) => {
+                sBody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-5 font-bold text-gray-900">${s.nom} <br><span class="text-xs text-gray-500 font-normal">${s.email}</span></td>
+                        <td class="p-5 text-right"><button onclick="deleteStudent(${index})" class="text-gray-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+            });
+            document.getElementById('student-count').innerText = students.length;
+        }
+
+        function saveVideo() {
+            const title = document.getElementById('video-title').value.trim();
+            const category = document.getElementById('video-category').value;
+            const fileInput = document.getElementById('video-file');
+
+            if (!title) return alert("Veuillez entrer un titre pour la vidéo.");
+            if (fileInput.files.length === 0) return alert("Veuillez parcourir et sélectionner un fichier vidéo.");
+
+            const file = fileInput.files[0];
+            const fileName = file.name;
+
+            videos.unshift({
+                titre: title,
+                categorie: category,
+                fichier: fileName
+            });
+            saveLocal();
+
+            document.getElementById('video-title').value = '';
+            fileInput.value = '';
+            closeModal('modal-video');
+            renderAll();
+        }
+
+        function previewVideo(fileName, title) {
+            const player = document.getElementById('preview-player');
+            document.getElementById('preview-title').innerText = title;
+            player.src = fileName;
+            player.onerror = () => {
+                player.onerror = null;
+                player.src = 'videos/' + fileName;
+            };
+            openModal('modal-preview');
+            player.play().catch(() => {});
+        }
+
+        function closePreview() {
+            const player = document.getElementById('preview-player');
+            player.pause();
+            player.src = '';
+            closeModal('modal-preview');
+        }
+
+        function deleteVideo(index) {
+            videos.splice(index, 1);
+            saveLocal();
+            renderAll();
+        }
+
+        function saveCategory() {
+            const title = document.getElementById('category-title').value.trim();
+            if (!title) return alert("Veuillez entrer un nom de catégorie.");
+            categories.push(title);
+            saveLocal();
+            document.getElementById('category-title').value = '';
+            closeModal('modal-category');
+            renderAll();
+        }
+
+        function deleteCategory(index) {
+            categories.splice(index, 1);
+            saveLocal();
+            renderAll();
+        }
+
+        function saveStudent() {
+            const nom = document.getElementById('student-name').value.trim();
+            const email = document.getElementById('student-email').value.trim();
+            if (!nom || !email) return alert("Veuillez remplir tous les champs.");
+            students.unshift({ nom, email });
+            saveLocal();
+            document.getElementById('student-name').value = '';
+            document.getElementById('student-email').value = '';
+            closeModal('modal-student');
+            renderAll();
+        }
+
+        function deleteStudent(index) {
+            students.splice(index, 1);
+            saveLocal();
+            renderAll();
+        }
+
+        renderAll();
+    </script>
+</body>
+</html>
